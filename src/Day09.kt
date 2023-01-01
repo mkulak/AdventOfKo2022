@@ -39,19 +39,12 @@ fun main() {
 
     fun part2(input: List<String>): Int {
         val visited = HashSet<Long>()
-        val rope = List(10) { XY(0, 0) }
+        val rope = List(10) { XY(0, 4) }
         input.forEach { line ->
             val dir = line[0]
             val steps = line.drop(2).toInt()
-            val inc = when (dir) {
-                'U' -> XY(0, -1)
-                'D' -> XY(0, 1)
-                'L' -> XY(-1, 0)
-                'R' -> XY(1, 0)
-                else -> throw IllegalArgumentException("Unknown dir: $dir")
-            }
             repeat(steps) {
-                moveRope(rope, inc)
+                moveRope(rope, dir)
                 visited += rope.last().encode()
             }
         }
@@ -63,25 +56,47 @@ fun main() {
     println(part2(input))
 }
 
-fun moveRope(rope: List<XY>, inc: XY) {
-    rope[0] += inc
+fun moveRope(rope: List<XY>, dir: Char) {
+    val head = rope.first()
+    when (dir) {
+        'U' -> head.y -= 1
+        'D' -> head.y += 1
+        'L' -> head.x -= 1
+        'R' -> head.x += 1
+        else -> throw IllegalArgumentException("Unknown dir: $dir")
+    }
     for (i in 1..rope.lastIndex) {
         val prev = rope[i - 1]
         val current = rope[i]
         val diffX = prev.x - current.x
         val diffY = prev.y - current.y
-        current.x += diffX.sign
-        current.y += diffY.sign
+        if (diffX.absoluteValue >= 2) {
+            if (diffY.absoluteValue >= 1) {
+                current.y += diffY.sign
+            }
+            current.x += diffX.sign
+        } else if (diffY.absoluteValue >= 2) {
+            if (diffX.absoluteValue >= 1) {
+                current.x += diffX.sign
+            }
+            current.y += diffY.sign
+        }
     }
 }
 
+fun printRope(rope: List<XY>) {
+    val map = HashMap<XY, Int>()
+    rope.forEachIndexed { i, xy -> map[xy] = i }
+    for (y in 0..4) {
+        for (x in 0..5) {
+            val s = map[XY(x, y)]?.toString() ?: "."
+            print(s)
+        }
+        println()
+    }
+    println()
+}
 
 data class XY(var x: Int, var y: Int)  {
     fun encode(): Long = (x.toLong() shl 32) + y
-
-    operator fun plusAssign(other: XY) {
-        x += other.x
-        y += other.y
-    }
-
 }
